@@ -41,7 +41,7 @@ The app will start from the SignIn screen and once the user create new account o
    REACT_APP_MESSAGING_SENDER_ID=
    REACT_APP_APP_ID=
    REACT_APP_MEASUREMENT_ID=
-   REACT_APP_CONFIRMATION_EMAIL_REDIRECT=http://localhost:3000 (Make sure you change this link to you domain when deploying you app to production)
+   REACT_APP_CONFIRMATION_EMAIL_REDIRECT=http://localhost:3000 (Make sure you change this link to your domain when deploying you app to production)
    ```
 4. start the development server
 
