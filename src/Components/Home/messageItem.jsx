@@ -44,7 +44,6 @@ class MessageItem extends Component {
           ) : ( */}
           <span>
             {
-              authUser.uid === message.otherUser &&
                 availableUser.map((user, key) => {
                   return (
                     user.uid === message.userID && (

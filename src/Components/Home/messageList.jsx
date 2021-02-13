@@ -3,7 +3,7 @@ import MessageItem from './messageItem';
 
 //Component define to populate auth user messages
  const MessageList = ({
-//   authUser,
+  authUser,
   messages,
   onEditMessage,
   availableUser,
@@ -13,7 +13,7 @@ import MessageItem from './messageItem';
     <ul className="chat">
       {messages.map((message) => (
         <MessageItem
-        //   authUser={authUser}
+          authUser={authUser}
           availableUser={availableUser}
           key={message.id}
           message={message}

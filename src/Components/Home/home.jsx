@@ -19,6 +19,8 @@ class Home extends Component {
       availableUser: [],
       selectedUser: [],
       check: false,
+      authUser:{},
+      currentUser:{},
     };
   }
 
@@ -44,34 +46,19 @@ class Home extends Component {
   onCreateMessage = (event, authUser) => {
     event.preventDefault();
 
-    // const timeStamp = JSON.stringify(new Date(Date.now()));
+    const timeStamp = JSON.stringify(new Date(Date.now()));
 
-    // this.state.availableUser.map((user) => {
-    //   if (user.isChecked) {
-    //     this.props.firebase.msgs().add(
-    //       Object.assign({
-    //         message: this.state.message,
-    //         createAt: timeStamp,
-    //         otherUser: user.uid,
-    //         userID: authUser.uid,
-    //         sender: !this.state.sender,
-    //       })
-    //     );
-    //     this.setState({ message: "" });
-    //   }
-    //   return user;
-    // });
-
-    // this.props.firebase.msgs().add(
-    //   Object.assign({
-    //     message: this.state.message,
-    //     createAt: timeStamp,
-    //     otherUser: authUser.uid,
-    //     userID: authUser.uid,
-    //     sender: !this.state.sender,
-    //   })
-    // );
-    // this.setState({ message: "" });
+    if(this.state.message !== ""){
+      fire.firestore().collection("messages").add(
+        Object.assign({
+          message: this.state.message,
+          createAt: timeStamp,
+          userID: authUser.uid,
+        })
+      );
+    }
+    
+    this.setState({ message: "" });
   };
 
   // // handle check in check box method and set the state as user check the check box
@@ -84,45 +71,61 @@ class Home extends Component {
   // };
 
   // // when the component is load, all the data is stored in the messages (array) state
-  // componentDidMount() {
-  //   this.onListenForMessages();
-  //   this.lis = this.props.firebase.users().onSnapshot((snapshot) => {
-  //     let availableUser = [];
+  componentDidMount() {
+    this.onListenForMessages();
+    fire.auth().onAuthStateChanged(user => {
+      if(user){
+				this.setState({authUser:user,})
 
-  //     snapshot.forEach((doc) => {
-  //       let data = doc.data();
-  //       availableUser.push({
-  //         fullName: data.fullName,
-  //         isChecked: false,
-  //         uid: doc.id,
-  //       });
-  //     });
+        fire.firestore().collection("users").doc(user.uid).get().then((doc) => {
+          if(doc.exists){
+            this.setState({currentUser:doc.data()})
+          }else{
+            this.setState({currentUser:""})
+          }
+        }).catch((error) => {
+          console.log("Error getting document:", error);
+      });
+			}
+    })
+   
+    
 
-  //     this.setState({
-  //       availableUser,
-  //       loading: false,
-  //     });
-  //   });
-  // }
+    this.lis = fire.firestore().collection("users").onSnapshot((snapshot) => {
+      let availableUser = [];
+      snapshot.forEach((doc) => {
+        let data = doc.data();
+        availableUser.push({
+          fullName: data.fullName,
+          isChecked: false,
+          uid: doc.id,
+        });
+      });
+
+      this.setState({
+        availableUser,
+        loading: false,
+      });
+    });
+  }
 
   // // Method then use it in componentDidMount
-  // onListenForMessages() {
-  //   this.setState({ loading: true });
-  //   this.listener = this.props.firebase
-  //     .msgs()
-  //     .orderBy("createAt")
-  //     .onSnapshot((snapshot) => {
-  //       let messageList = [];
-  //       snapshot.forEach((doc) => {
-  //         messageList.push({ ...doc.data(), id: doc.id });
-  //       });
-  //       if (messageList) {
-  //         this.setState({ messages: messageList, loading: false });
-  //       } else {
-  //         this.setState({ messages: null, loading: false });
-  //       }
-  //     });
-  // }
+  onListenForMessages() {
+    this.setState({ loading: true });
+    this.listener = fire.firestore().collection("messages")
+      .orderBy("createAt")
+      .onSnapshot((snapshot) => {
+        let messageList = [];
+        snapshot.forEach((doc) => {
+          messageList.push({ ...doc.data(), id: doc.id });
+        });
+        if (messageList) {
+          this.setState({ messages: messageList, loading: false });
+        } else {
+          this.setState({ messages: null, loading: false });
+        }
+      });
+  }
 
   // //this method help user to delete the message
   // onRemoveMessage = (userID, otherUser, id) => {
@@ -164,12 +167,16 @@ class Home extends Component {
       check,
       selectedUser,
       availableUser,
+      authUser,
+      currentUser,
     } = this.state;
     return (
       <>
   
+  
 
   <Authorized>
+
    
       {/* <!-- Background color split screen for large screens --> */}
 <div className="fixed top-0 left-0 w-1/2 h-full bg-white" aria-hidden="true"></div>
@@ -214,15 +221,14 @@ class Home extends Component {
         <div className="hidden lg:block lg:w-80">
           <div className="flex items-center justify-end">
             <div className="flex">
-              <a href="#" className="px-3 py-2 rounded-md text-sm font-medium text-indigo-200 hover:text-white">Documentation</a>
-              <a href="#" className="px-3 py-2 rounded-md text-sm font-medium text-indigo-200 hover:text-white">Support</a>
+              <span className="px-3 py-2 rounded-md text-sm font-medium text-indigo-200 hover:text-white">{currentUser.fullName}</span>
             </div>
             {/* <!-- Profile dropdown --> */}
             <div className="ml-4 relative flex-shrink-0">
               <div>
               <button  onClick={this.onClickProfile} className="bg-indigo-700 flex text-sm rounded-full text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white" id="user-menu" aria-haspopup="true">
             <span className="sr-only">Open user menu</span>
-            <img className="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-1.2.1&ixqx=HIpa3T1wF9&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=256&h=256&q=80" alt="" />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="36px" height="36px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
           </button>      
               </div>
               {/* <!--
@@ -274,8 +280,7 @@ class Home extends Component {
             > 
     <div className="lg:hidden">
       <div className="px-2 pt-2 pb-3">
-        <a href="#" className="block px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-800">Dashboard</a>
-        <a href="#" className="mt-1 block px-3 py-2 rounded-md text-base font-medium text-indigo-200 hover:text-indigo-100 hover:bg-indigo-600">Support</a>
+      <span className="px-3 py-2 rounded-md text-sm font-medium text-indigo-200 hover:text-white">{currentUser.fullName}</span>
       </div>
       <div className="pt-4 pb-3 border-t border-indigo-800">
         <div className="px-2">
@@ -301,25 +306,27 @@ class Home extends Component {
                 {/* <!-- Profile --> */}
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0 h-12 w-12">
-                    <img className="h-12 w-12 rounded-full" src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-1.2.1&ixqx=HIpa3T1wF9&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=256&h=256&q=80" alt="" />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" width="48px" height="48px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                   
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm font-medium text-gray-900">Debbie Lewis</div>
+                    <div className="text-sm font-medium text-gray-900">{currentUser.fullName}</div>
                     <a href="#" className="group flex items-center space-x-2.5">
-                      <svg className="h-5 w-5 text-gray-400 group-hover:text-gray-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-gray-500 group-hover:text-gray-900 font-medium">debbielewis</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" 
+                    width="25px" height="25px"><path d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                      <span className="text-sm break-all text-gray-500 group-hover:text-gray-900 font-medium">{currentUser.email}</span>
                     </a>
                   </div>
                 </div>
                 {/* <!-- Action buttons --> */}
                 <div className="flex flex-col sm:flex-row xl:flex-col">
                   <button type="button" className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 xl:w-full">
-                    New Project
+                    General Channel
                   </button>
                   <button type="button" className="mt-3 inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 xl:ml-0 xl:mt-3 xl:w-full">
-                    Invite Team
+                    Private Channel
                   </button>
                 </div>
               </div>
@@ -332,13 +339,6 @@ class Home extends Component {
                   </svg>
                   <span className="text-sm text-gray-500 font-medium">Pro Member</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {/* <!-- Heroicon name: solid/collection --> */}
-                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-                  </svg>
-                  <span className="text-sm text-gray-500 font-medium">8 Message</span>
-                </div>
               </div>
             </div>
           </div>
@@ -349,14 +349,13 @@ class Home extends Component {
       <div className="bg-white lg:min-w-0 lg:flex-1">
         <div className="pl-4 pr-6 pt-4 pb-4 border-b border-t border-gray-200 sm:pl-6 lg:pl-8 xl:pl-6 xl:pt-6 xl:border-t-0">
           <div className="flex items-center">
-            <h1 className="flex-1 text-lg font-medium">Chat box</h1>
-            
+            <h1 className="flex m-auto text-lg font-medium">Chat box</h1>
           </div>
         </div>
         {loading && <div>Loading ...</div>}
         {messages ? (
                     <MessageList
-                      // authUser={authUser}
+                      authUser={authUser}
                       messages={messages}
                       availableUser={availableUser}
                       selectedUser={selectedUser}
@@ -368,21 +367,28 @@ class Home extends Component {
                   )}
 
                   {/* The form to create messages */}
+                
                   <div className="">
+                  {/* {  authUser.map((user) => {
+                  
+                })} */}
                     <form
-                      // onSubmit={(event) =>
-                      //   this.onCreateMessage(event, authUser)
-                      // }
+                      onSubmit={(event) =>{
+                        this.onCreateMessage(event,authUser)
+                      }   
+                      }
                     >
 
-                    <div className="mt-1 flex rounded-md shadow-sm">
+                <div class="absolute w-full bottom-0 lg:w-3/4 lg:px-4 lg:pr-24 xl:max-w-4xl pb-2 sm:pb-5 xl:px-8 xl:pr-72 ">
+                <div class="max-w-screen mx-auto">
+                    <div className=" flex rounded-md shadow-sm">
                       <input type="text" value={message}
                         onChange={this.onChangeText} name="email" id="email" className=" w-full bg-purple-white shadow-lg rounded border-0 p-3" placeholder="Type a message" />
     
-                        <button className="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                        <button type="button" className="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
                           <svg 
                              onClick={(event) =>
-                              this.onCreateMessage(event)}
+                              this.onCreateMessage(event, authUser)}
                               xmlns="http://www.w3.org/2000/svg" 
                               viewBox="0 0 24 24" fill="black" 
                               width="36px" height="36px"><path d="M0 0h24v24H0z" 
@@ -390,6 +396,8 @@ class Home extends Component {
                               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                               </svg>
                           </button>
+                    </div>
+                    </div>
                     </div>            
                     </form>       
                   </div>
@@ -402,7 +410,7 @@ class Home extends Component {
     <div className="bg-gray-50 pr-4 sm:pr-6 lg:pr-8 lg:flex-shrink-0 lg:border-l lg:border-gray-200 xl:pr-0">
       <div className="pl-6 lg:w-80">
         <div className="pt-6 pb-2">
-          <h2 className="text-sm font-semibold">General Channel</h2>
+          <h2 className="text-sm text-center font-semibold">General Channel</h2>
         </div>
         <div>
           <ul className="divide-y divide-gray-200">
