@@ -10,7 +10,7 @@ import MessageItem from './messageItem';
   onRemoveMessage,
 }) => {
   return (
-    <ul className="chat">
+    <ul className="max-h-screen overflow-auto">
       {messages.map((message) => (
         <MessageItem
           authUser={authUser}

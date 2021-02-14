@@ -12,7 +12,7 @@ class Signup extends Component {
         email: "",
         password: "",
         fullName: "",
-        
+        status:"",
            };
     
   }
@@ -27,6 +27,7 @@ class Signup extends Component {
    const timeStamp = JSON.stringify(new Date(Date.now()));
    const data = {
      fullName: this.state.fullName,
+     status: this.state.status,
      email: this.state.email,
      createAt: timeStamp,
    }
@@ -121,7 +122,33 @@ class Signup extends Component {
                      />
                    </div>
 
-                   
+                   <div className="mt-1 flex  rounded-md  px-16 msm:px-4">
+                <span className=" msm:hidden inline-flex items-center px-3 py-2 rounded-tl-3xl  rounded-l-none border border-r-2 border-gray-400 bg-gray-250 text-gray-500 text-sm">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="35"
+                    height="25"
+                    viewBox="0 0 42.149 41.339"
+                  >
+                    <path
+                      d="M40.934,3H7.215A4.169,4.169,0,0,0,3.021,7.134L3,44.339l8.43-8.268h29.5a4.187,4.187,0,0,0,4.215-4.134V7.134A4.187,4.187,0,0,0,40.934,3ZM36.719,27.8H11.43V23.669H36.719Zm0-6.2H11.43V17.468H36.719Zm0-6.2H11.43V11.268H36.719Z"
+                      transform="translate(-3 -3)"
+                    />
+                  </svg>
+                </span>
+                <span className=" msm:hidden form-input text-center font-bold py-2 flex-1 block w-full rounded-br-none rounded-tr-none border border-r-2 border-gray-400 bg-gray-250 rounded-r-md transition duration-150 ease-in-out sm:text-sm sm:leading-5">
+                  Status/headline
+                </span>
+                <br />
+              </div>
+              <div className="px-16 msm:px-4">
+                <textarea
+                onChange={this.handleChange("status")}
+                  class="w-full shadow-lg rounded-tr-none px-3 py-2 text-gray-700 border border-r-2  rounded-r-md focus:outline-none transition duration-150 ease-in-out sm:text-sm sm:leading-5  msm:rounded-br-none msm:rounded"
+                  rows="3"
+                  placeholder="Type your message..."
+                ></textarea>
+              </div>
  
                    
 	                 </div>

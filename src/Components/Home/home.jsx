@@ -4,6 +4,7 @@ import { Transition } from "@headlessui/react";
 import {SignOut} from '../../Common/lib/firebase';
 import MessageList from './messageList';
 import fire from '../../Common/lib/firebase';
+import Avatar from 'react-avatar';
 
 //Class component reader general chat room when user enter to the messaging system
 class Home extends Component {
@@ -48,17 +49,19 @@ class Home extends Component {
 
     const timeStamp = JSON.stringify(new Date(Date.now()));
 
-    if(this.state.message !== ""){
-      fire.firestore().collection("messages").add(
-        Object.assign({
-          message: this.state.message,
-          createAt: timeStamp,
-          userID: authUser.uid,
-        })
-      );
-    }
-    
-    this.setState({ message: "" });
+
+      if(this.state.message !== ""){
+        fire.firestore().collection("messages").add(
+          Object.assign({
+            message: this.state.message,
+            createAt: timeStamp,
+            userID: authUser.uid,
+          })
+        );
+      }
+      this.setState({ message: "" });
+   
+
   };
 
   // // handle check in check box method and set the state as user check the check box
@@ -88,8 +91,6 @@ class Home extends Component {
       });
 			}
     })
-   
-    
 
     this.lis = fire.firestore().collection("users").onSnapshot((snapshot) => {
       let availableUser = [];
@@ -97,6 +98,7 @@ class Home extends Component {
         let data = doc.data();
         availableUser.push({
           fullName: data.fullName,
+          status: data.status,
           isChecked: false,
           uid: doc.id,
         });
@@ -128,21 +130,19 @@ class Home extends Component {
   }
 
   // //this method help user to delete the message
-  // onRemoveMessage = (userID, otherUser, id) => {
-  //   this.props.firebase.message(userID, id).delete();
-  //   this.props.firebase.message(otherUser, id).delete();
-  // };
+  onRemoveMessage = (id) => {
+    fire.firestore().collection("messages").doc(`${id}`).delete();
+  };
 
   // // The method help the auth user to edit the message
-  // onEditMessage = (content, message) => {
-  //   const { uid, ...messageSnapshot } = content;
-
-  //   this.props.firebase.message(content.id).set({
-  //     ...messageSnapshot,
-  //     editedAt: JSON.stringify(new Date(Date.now())),
-  //     message,
-  //   });
-  // };
+  onEditMessage = (content, message) => {
+    const { uid, ...messageSnapshot } = content;
+    fire.firestore().collection("messages").doc(`${content.id}`).set({
+      ...messageSnapshot,
+      editedAt: JSON.stringify(new Date(Date.now())),
+      message,
+    });
+  };
 
   //  // all the data which is load by componentDidMount method are unmount
   //  componentWillUnmount() {
@@ -228,7 +228,7 @@ class Home extends Component {
               <div>
               <button  onClick={this.onClickProfile} className="bg-indigo-700 flex text-sm rounded-full text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white" id="user-menu" aria-haspopup="true">
             <span className="sr-only">Open user menu</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="36px" height="36px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+            <Avatar  name={`${currentUser.fullName}`} size="45" round color={Avatar.getRandomColor('sitebase', ['red', 'blue', 'green'])} />
           </button>      
               </div>
               {/* <!--
@@ -306,8 +306,7 @@ class Home extends Component {
                 {/* <!-- Profile --> */}
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0 h-12 w-12">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" width="48px" height="48px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                   
+                  <Avatar  name={`${currentUser.fullName}`} size="45" round color={Avatar.getRandomColor('sitebase', ['red', 'blue', 'green'])} />
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-gray-900">{currentUser.fullName}</div>
@@ -321,7 +320,7 @@ class Home extends Component {
                   </div>
                 </div>
                 {/* <!-- Action buttons --> */}
-                <div className="flex flex-col sm:flex-row xl:flex-col">
+                <div className="flex flex-col sm:flex-row xl:flex-col">                
                   <button type="button" className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 xl:w-full">
                     General Channel
                   </button>
@@ -339,6 +338,7 @@ class Home extends Component {
                   </svg>
                   <span className="text-sm text-gray-500 font-medium">Pro Member</span>
                 </div>
+                <p className="rounded-md bg-gray-200 p-4 my-4 ">{currentUser.status}</p>                
               </div>
             </div>
           </div>
@@ -346,41 +346,46 @@ class Home extends Component {
       </div>
 
       {/* <!-- Chat Box --> */}
-      <div className="bg-white lg:min-w-0 lg:flex-1">
+      <div className="bg-white lg:min-w-0 lg:flex-1 ">
         <div className="pl-4 pr-6 pt-4 pb-4 border-b border-t border-gray-200 sm:pl-6 lg:pl-8 xl:pl-6 xl:pt-6 xl:border-t-0">
           <div className="flex items-center">
             <h1 className="flex m-auto text-lg font-medium">Chat box</h1>
           </div>
         </div>
-        {loading && <div>Loading ...</div>}
-        {messages ? (
-                    <MessageList
-                      authUser={authUser}
-                      messages={messages}
-                      availableUser={availableUser}
-                      selectedUser={selectedUser}
-                      onEditMessage={this.onEditMessage}
-                      onRemoveMessage={this.onRemoveMessage}
-                    />
-                  ) : (
-                    <div>There are no messages ...</div>
-                  )}
+            
+                  {loading && <div>Loading ...</div>}
+                  {messages ? (
+                              <MessageList
+                                authUser={authUser}
+                                messages={messages}
+                                availableUser={availableUser}
+                                selectedUser={selectedUser}
+                                onEditMessage={this.onEditMessage}
+                                onRemoveMessage={this.onRemoveMessage}
+                              />
+                            ) : (
+                              <div>There are no messages ...</div>
+                            )}
 
-                  {/* The form to create messages */}
-                
-                  <div className="">
-                  {/* {  authUser.map((user) => {
-                  
-                })} */}
-                    <form
+                            {/* The form to create messages */}
+                          
+                            <div className="">
+                            {/* {  authUser.map((user) => {
+                            
+                          })} */}
+                           
+      
+              
+                          
+                  </div>
+                  <form
                       onSubmit={(event) =>{
                         this.onCreateMessage(event,authUser)
                       }   
                       }
                     >
-
-                <div class="absolute w-full bottom-0 lg:w-3/4 lg:px-4 lg:pr-24 xl:max-w-4xl pb-2 sm:pb-5 xl:px-8 xl:pr-72 ">
-                <div class="max-w-screen mx-auto">
+                <div className=" absolute w-full bottom-0 lg:w-3/4 lg:px-4 lg:pr-24 xl:max-w-4xl pb-2 sm:pb-5 xl:px-8 xl:pr-72 ">
+                <div className="max-w-screen mx-auto">
                     <div className=" flex rounded-md shadow-sm">
                       <input type="text" value={message}
                         onChange={this.onChangeText} name="email" id="email" className=" w-full bg-purple-white shadow-lg rounded border-0 p-3" placeholder="Type a message" />
@@ -399,43 +404,52 @@ class Home extends Component {
                     </div>
                     </div>
                     </div>            
-                    </form>       
-                  </div>
-                  <div>                 
+                    </form>
+                  <div> 
+                                  
 </div>
        
       </div>
     </div>
+
+                                   
     {/* <!-- Activity feed --> */}
     <div className="bg-gray-50 pr-4 sm:pr-6 lg:pr-8 lg:flex-shrink-0 lg:border-l lg:border-gray-200 xl:pr-0">
       <div className="pl-6 lg:w-80">
         <div className="pt-6 pb-2">
           <h2 className="text-sm text-center font-semibold">General Channel</h2>
         </div>
-        <div>
-          <ul className="divide-y divide-gray-200">
+    {availableUser.map((data, key) => {
+     
+      return(
+        <div key={key}>
+           {currentUser.fullName !== data.fullName && (
+            <ul className="divide-y divide-gray-200">
             <li className="py-4">
               <div className="flex space-x-3">
-                <img className="h-6 w-6 rounded-full" src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-1.2.1&ixqx=HIpa3T1wF9&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=256&h=256&q=80" alt="" />
+                <Avatar  name={`${data.fullName}`} size="60" round color={Avatar.getRandomColor('sitebase', ['red', 'blue', 'green'])} />
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium">You</h3>
-                    <p className="text-sm text-gray-500">1h</p>
+                    <h3 className="text-sm font-medium">{data.fullName}</h3>
+                    <p className="text-xs text-gray-500">Pro Member</p>
                   </div>
-                  <p className="text-sm text-gray-500">Deployed Workcation (2d89f0c8 in master) to production</p>
+                  <p className="text-sm text-gray-500">{data.status}</p>
                 </div>
               </div>
             </li>
-
-            {/* <!-- More items... --> */}
           </ul>
+           )}
+          
           
         </div>
-      </div>
+     
+      )
+    })}
+     </div>
     </div>
+    
   </div>
 </div>
-    
        </Authorized>
       </>
     );
