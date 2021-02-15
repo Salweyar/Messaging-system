@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import MessageItem from './messageItem';
+import MessageItem from "./messageItem";
 
 //Component define to populate auth user messages
- const MessageList = ({
+const MessageList = ({
   authUser,
   messages,
   onEditMessage,
@@ -10,7 +10,7 @@ import MessageItem from './messageItem';
   onRemoveMessage,
 }) => {
   return (
-    <ul className="max-h-screen overflow-auto">
+    <ul className="">
       {messages.map((message) => (
         <MessageItem
           authUser={authUser}
