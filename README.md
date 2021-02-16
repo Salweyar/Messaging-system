@@ -1,4 +1,4 @@
-# ReactJS-Firebase (Messaging System) -- Note this is still Under Development
+# ReactJS-Firebase (Messaging System)
 
 This is a starter template for react app developer
 
@@ -15,7 +15,7 @@ This is a starter template for react app developer
 
 The app will start from the SignIn screen and once the user create new account or signIn then it show the messaging system.
 
-![]()
+![](https://salweyar.github.io/images/react-firebase-messaging-system/react-firebase-messaging-system.gif)
 
 ## Usage
 
