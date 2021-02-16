@@ -597,11 +597,8 @@ class Home extends Component {
                     {this.state.channel === "General" && messages ? (
                       <MessageList
                         authUser={authUser}
-                        userMessages={userMessages}
-                        channel={channel}
                         messages={messages}
                         availableUser={availableUser}
-                        selectedUser={selectedUser}
                         onEditMessage={this.onEditMessage}
                         onRemoveMessage={this.onRemoveMessage}
                       />
@@ -613,9 +610,6 @@ class Home extends Component {
                               authUser={authUser}
                               userMessages={userMessages}
                               availableUser={availableUser}
-                              selectedUser={selectedUser}
-                              onEditMessage={this.onEditMessage}
-                              onRemoveUserMessage={this.onRemoveUserMessage}
                             />
                           </>
                         ) : (

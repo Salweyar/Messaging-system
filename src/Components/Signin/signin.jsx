@@ -1,41 +1,92 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import {SignIn} from '../../Common/lib/firebase';
-import { withRouter } from 'react-router-dom';
+import { SignIn } from "../../Common/lib/firebase";
+import { withRouter } from "react-router-dom";
+import SimpleReactValidator from "simple-react-validator";
+import FlashMessage from "react-flash-message";
 
 class Signin extends Component {
   constructor() {
     super();
 
+    //Define validation rules
+    this.validator = new SimpleReactValidator();
+
     this.state = {
-        email: "",
-        password: "",
-      };
-        
+      email: "",
+      password: "",
+      errorMessage: "",
+      error: false,
+    };
   }
 
   handleChange = (input) => (e) => {
     this.setState({ [input]: e.target.value });
-	  };
+  };
 
-      onClickSignIn = async () => {
-        const {history} = this.props;
-        const result =  SignIn(this.state.email, this.state.password).then(user => {
-          history.push("/")
-        }).catch(err => {
-          console.log(err);
+  onClickSignIn = async () => {
+    const { history } = this.props;
+    if (this.validator.allValid()) {
+      const result = SignIn(this.state.email, this.state.password)
+        .then((user) => {
+          history.push("/");
         })
-        return result;
-};
+        .catch((err) => {
+          setTimeout(
+            () => this.setState({ error: true, errorMessage: err.message }),
+            100
+          );
+          this.setState({ error: false, errorMessage: "" });
+        });
+      return result;
+    } else {
+      this.validator.showMessages();
+      // rerender to show messages for the first time
+      // you can use the autoForceUpdate option to do this automatically`
 
+      this.forceUpdate();
+    }
+  };
 
   render() {
+    const { error, errorMessage } = this.state;
+
     return (
       <>
+        {error === true && (
+          <FlashMessage duration={10000}>
+            <div className=" flex m-auto px-20 py-6 mt-8 rounded-md bg-red-50 w-1/2">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  {errorMessage}
+                </h3>
+              </div>
+            </div>
+          </FlashMessage>
+        )}
         <div className="min-h-screen flex items-center justify-center  py-12 px-4 sm:px-6 lg:px-8 ">
           <div className="max-w-xl  w-full space-y-8 border shadow-lg px-20 py-16">
             <div>
-            <img className="mx-auto h-12 w-auto" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg" alt="Workflow" />
+              <img
+                className="mx-auto h-12 w-auto"
+                src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                alt="Workflow"
+              />
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 msm:text-xl">
                 Log in to your account
               </h2>
@@ -68,6 +119,14 @@ class Signin extends Component {
                   placeholder="Enter Email"
                 />
               </div>
+              {this.validator.message(
+                "Email",
+                this.state.email,
+                "required|email",
+                {
+                  className: "text-red-600  mt-2 ml-16",
+                }
+              )}
 
               <div className="flex rounded-md  px-16">
                 <span className="msm:hidden  shadow-lg inline-flex items-center px-3 py-2 rounded-tl-2xl rounded-l-sm border border-r-2 border-gray-400 bg-gray-250 text-gray-500 text-sm">
@@ -89,6 +148,14 @@ class Signin extends Component {
                   placeholder="Password"
                 />
               </div>
+              {this.validator.message(
+                "Password",
+                this.state.password,
+                "required",
+                {
+                  className: "text-red-600  mt-2 ml-16",
+                }
+              )}
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -165,7 +232,7 @@ class Signin extends Component {
               </div>
             </div>
           </div>
-	        </div>
+        </div>
       </>
     );
   }

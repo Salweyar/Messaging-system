@@ -2,16 +2,24 @@ import React, { Component } from "react";
 import { Link } from "react-router-dom";
 import { SignUp } from "../../Common/lib/firebase";
 import { withRouter } from "react-router-dom";
+import SimpleReactValidator from "simple-react-validator";
+import FlashMessage from "react-flash-message";
+import fire from "../../Common/lib/firebase";
 
 class Signup extends Component {
   constructor() {
     super();
+
+    //Define validation rules
+    this.validator = new SimpleReactValidator();
 
     this.state = {
       email: "",
       password: "",
       fullName: "",
       status: "",
+      errorMessage: "",
+      error: false,
     };
   }
 
@@ -21,7 +29,6 @@ class Signup extends Component {
 
   onCreateUser = () => {
     const { history } = this.props;
-
     const timeStamp = JSON.stringify(new Date(Date.now()));
     const data = {
       fullName: this.state.fullName,
@@ -30,13 +37,49 @@ class Signup extends Component {
       createAt: timeStamp,
     };
 
-    SignUp(this.state.email, this.state.password, data);
-    history.push("/verify-email");
+    if (this.validator.allValid()) {
+      SignUp(this.state.email, this.state.password, data);
+
+      history.push("/verify-email");
+    } else {
+      this.validator.showMessages();
+      // rerender to show messages for the first time
+      // you can use the autoForceUpdate option to do this automatically`
+
+      this.forceUpdate();
+    }
   };
 
   render() {
+    const { error, errorMessage } = this.state;
     return (
       <>
+        {error === true && (
+          <FlashMessage duration={10000}>
+            <div className=" flex m-auto px-20 py-6 mt-8 rounded-md bg-red-50 w-1/2">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  {errorMessage}
+                </h3>
+              </div>
+            </div>
+          </FlashMessage>
+        )}
         <div className="min-h-screen flex items-center justify-center  py-12 px-4 sm:px-6 lg:px-8">
           <div className=" max-w-xl  w-full space-y-8 border shadow-lg  px-20 py-16">
             <img
@@ -75,6 +118,14 @@ class Signup extends Component {
                       onChange={this.handleChange("fullName")}
                     />
                   </div>
+                  {this.validator.message(
+                    "Full Name",
+                    this.state.fullName,
+                    "required|alpha_space",
+                    {
+                      className: "text-red-600 ml-16 mb-4",
+                    }
+                  )}
 
                   <div className="mt-1 flex pb-4 rounded-md  px-16">
                     <span className="msm:hidden shadow-lg inline-flex items-center px-3 py-2 rounded-tl-2xl rounded-l-sm border border-r-2 border-gray-400 bg-gray-250 text-gray-500 text-sm">
@@ -96,6 +147,14 @@ class Signup extends Component {
                       onChange={this.handleChange("email")}
                     />
                   </div>
+                  {this.validator.message(
+                    "Email",
+                    this.state.email,
+                    "required|email",
+                    {
+                      className: "text-red-600 ml-16 mb-4",
+                    }
+                  )}
                   <div className="text-center mb-4"></div>
                   <div className="mt-1 flex  pb-4 rounded-md  px-16">
                     <span className="msm:hidden shadow-lg inline-flex items-center px-3 py-2 rounded-tl-2xl rounded-l-sm border border-r-2 border-gray-400 bg-gray-250 text-gray-500 text-sm">
@@ -112,11 +171,20 @@ class Signup extends Component {
                     </span>
 
                     <input
+                      type="password"
                       className="form-input shadow-lg px-4 flex-1 block w-full rounded-br-xl rounded-tr-none border border-2 border-gray-300 bg-gray-250 rounded-r-md transition duration-150 ease-in-out sm:text-sm sm:leading-5 msm:py-2 msm:rounded-br-none msm:rounded msm:text-sm"
                       placeholder="Password"
                       onChange={this.handleChange("password")}
                     />
                   </div>
+                  {this.validator.message(
+                    "password",
+                    this.state.password,
+                    "required",
+                    {
+                      className: "text-red-600 ml-16 mb-4",
+                    }
+                  )}
 
                   <div className="mt-1 flex  rounded-md  px-16 msm:px-4">
                     <span className=" msm:hidden inline-flex items-center px-3 py-2 rounded-tl-3xl  rounded-l-none border border-r-2 border-gray-400 bg-gray-250 text-gray-500 text-sm">
